@@ -2,32 +2,31 @@
 library(r.jive)
 library(dplyr)
 
-
-# test data
-# data(BRCA_data)
-# d = Data[[1]]
-# d[1:5, 1:2]
-# results = jive(Data)
-
 ################################################################################
 # Step 1: load the data
 ################################################################################
-assays <- c('plasma_cytokine_concentration', 'pbmc_cell_frequency',
-            'plasma_ab_titer', 'pbmc_gene_expression')
+print("# Step 1: load the data")
+assays <- list(plasma_cytokine_concentration='results/processed/harmonized/training_plasma_cytokine_concentrations.tsv',
+               pbmc_cell_frequency='results/processed/harmonized/training_pbmc_cell_frequency.tsv',
+               plasma_ab_titer='results/processed/harmonized/training_plasma_antibody_levels.tsv',
+               pbmc_gene_expression='results/processed/harmonized/training_pbmc_gene_expression.tsv')
 
 cmipb_prelim_data <- list()
 cmipb_samples <- list()
 for (i in seq(length(assays))){
     
-    # get the current assay data
-    assay <- assays[i]
-    fn <- "results/main/cmi_pb_datasets/processed/training_data/%s.training-data.tsv"
-    fn <- sprintf(fn, assay)
     
+    assay <- names(assays)[[i]]
+    fn <- assays[[assay]]
+    
+    print(assay)
+
     # data must be in the format rows = variables, columns = samples
-    curr_data <- read.table(fn, sep='\t', na.strings = c(""), row.names = "V1")
-    colnames(curr_data) <- curr_data[1,]
-    curr_data <- curr_data[2:nrow(curr_data),]
+    curr_data <- read.table(fn, sep='\t', na.strings = c(""), header=TRUE)
+    
+    # rename rows
+    rownames(curr_data) <- curr_data[,"subject_id"]
+    curr_data <- curr_data[, 2:ncol(curr_data)]
     
     # remove incomplete columns
     curr_data <- curr_data[, complete.cases(t(curr_data))]
@@ -43,11 +42,12 @@ View(cmipb_prelim_data[[1]])
 ################################################################################
 # Step 2: extract shared samples 
 ################################################################################
+print("# Step 2: extract shared samples")
 
 # find the common elements
 common_samples <- Reduce(intersect, cmipb_samples)
 write(common_samples,
-      file = "results/main/cmi_pb_datasets/processed/training_data/common_samples.txt",
+      file = "results/jive/harmonized/common_samples.txt",
       sep = "\n")
 
 cmipb_data <- list()
@@ -78,6 +78,8 @@ for (i in seq(length(assays))) {
 ################################################################################
 # Step 3: run JIVE and extract components
 ################################################################################
+print("# Step 3: run JIVE and extract components")
+
 # Cantini ran JIVE as such:
 # https://github.com/cantinilab/momix-notebook/blob/628fcfde5e1cd3ab69d323b4be9232e480f42d31/scripts/runfactorization.R#L174C1-L175C1
 
@@ -122,30 +124,28 @@ final_factorizations_jive <- list(factors_jive, metagenes_jive)
 ################################################################################
 # Step 3: save JIVE decompositions
 ################################################################################
+print("# Step 3: save JIVE decompositions")
     
 for (i in seq(length(assays))){
     
-    assay <- assays[i]
+    assay <- names(assays)[i]
     current_loadings <- metagenes_jive[[i]]
     
-    outfn <- "results/main/cmi_pb_datasets/processed/training_data/%s.jive-loadings.tsv"
+    outfn <- "results/jive/harmonized/%s.jive-loadings.tsv"
     outfn <- sprintf(outfn, assay)
     write.table(current_loadings, file=outfn, sep = '\t')
               
 }
 
 
-
-
-
-png("VarExplained.png",height=300,width=450)  
-showVarExplained(factorizations_jive)  
-dev.off()
-
-
-png("HeatmapsBRCA.png",height=1000,width=1200)
-showHeatmaps(factorizations_jive)
-dev.off() 
+# png("VarExplained.png",height=300,width=450)  
+# showVarExplained(factorizations_jive)  
+# dev.off()
+# 
+# 
+# png("HeatmapsBRCA.png",height=1000,width=1200)
+# showHeatmaps(factorizations_jive)
+# dev.off() 
 
 
 
