@@ -6,9 +6,9 @@ library(dplyr)
 # Step 1: load the data
 ################################################################################
 print("# Step 1: load the data")
-assays <- list(plasma_cytokine_concentration='results/processed/harmonized/training_plasma_cytokine_concentrations.tsv',
+assays <- list(plasma_cytokine_concentrations='results/processed/harmonized/training_plasma_cytokine_concentrations.tsv',
                pbmc_cell_frequency='results/processed/harmonized/training_pbmc_cell_frequency.tsv',
-               plasma_ab_titer='results/processed/harmonized/training_plasma_antibody_levels.tsv',
+               plasma_antibody_levels='results/processed/harmonized/training_plasma_antibody_levels.tsv',
                pbmc_gene_expression='results/processed/harmonized/training_pbmc_gene_expression.tsv')
 
 cmipb_prelim_data <- list()
@@ -24,10 +24,12 @@ for (i in seq(length(assays))){
     # data must be in the format rows = variables, columns = samples
     curr_data <- read.table(fn, sep='\t', na.strings = c(""), header=TRUE)
     
+    
     # rename rows
     rownames(curr_data) <- curr_data[,"subject_id"]
     curr_data <- curr_data[, 2:ncol(curr_data)]
     
+
     # remove incomplete columns
     curr_data <- curr_data[, complete.cases(t(curr_data))]
     
@@ -134,7 +136,6 @@ for (i in seq(length(assays))){
     outfn <- "results/jive/harmonized/%s.jive-loadings.tsv"
     outfn <- sprintf(outfn, assay)
     write.table(current_loadings, file=outfn, sep = '\t')
-              
 }
 
 
