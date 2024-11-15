@@ -36,3 +36,8 @@ Open Visual Studio + Jupyter
 Install the necessary dependencies
 Run notebook
 ```
+
+### 4. Model-Submissions-With-Jive-Factors.ipynb
+```
+Run notebook
+```
